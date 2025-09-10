@@ -1,0 +1,358 @@
+openapi: 3.0.0
+info:
+  title: Cafeteria Management API
+  version: 0.1.0
+  description: API для управления столовой (продукты, блюда, меню, заказы)
+tags:
+  - name: Products
+    description: Операции с продуктами
+  - name: Dishes
+    description: Операции с блюдами
+  - name: Menu
+    description: Операции с меню
+  - name: Orders
+    description: Операции с заказами
+
+paths:
+  # Продукты
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Получение списка всех продуктов
+      responses:
+        200:
+          description: Список продуктов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      tags: [Products]
+      summary: Добавление нового продукта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        201:
+          description: Продукт успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Получение информации о продукте
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Информация о продукте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    put:
+      tags: [Products]
+      summary: Обновление информации о продукте
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        200:
+          description: Продукт успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      tags: [Products]
+      summary: Удаление продукта
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Продукт успешно удален
+
+  # Блюда
+  /api/dishes:
+    get:
+      tags: [Dishes]
+      summary: Получение списка всех блюд
+      responses:
+        200:
+          description: Список блюд
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dish"
+    post:
+      tags: [Dishes]
+      summary: Добавление нового блюда
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dish"
+      responses:
+        201:
+          description: Блюдо успешно добавлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+  /api/dishes/{id}:
+    get:
+      tags: [Dishes]
+      summary: Получение информации о блюде
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Информация о блюде
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+    put:
+      tags: [Dishes]
+      summary: Обновление информации о блюде
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dish"
+      responses:
+        200:
+          description: Блюдо успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dish"
+    delete:
+      tags: [Dishes]
+      summary: Удаление блюда
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Блюдо успешно удалено
+
+  # Меню
+  /api/menu:
+    get:
+      tags: [Menu]
+      summary: Получение текущего меню
+      responses:
+        200:
+          description: Текущее меню
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+    post:
+      tags: [Menu]
+      summary: Добавление блюда в меню
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItem"
+      responses:
+        201:
+          description: Блюдо успешно добавлено в меню
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+  /api/menu/{id}:
+    put:
+      tags: [Menu]
+      summary: Обновление пункта меню
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItem"
+      responses:
+        200:
+          description: Пункт меню успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+    delete:
+      tags: [Menu]
+      summary: Удаление пункта меню
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Пункт меню успешно удален
+
+  # Заказы
+  /api/orders:
+    get:
+      tags: [Orders]
+      summary: Получение списка всех заказов
+      responses:
+        200:
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      tags: [Orders]
+      summary: Создание нового заказа
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+      responses:
+        201:
+          description: Заказ успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+  /api/orders/{id}:
+    put:
+      tags: [Orders]
+      summary: Обновление заказа
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+      responses:
+        200:
+          description: Заказ успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      tags: [Orders]
+      summary: Удаление заказа
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Заказ успешно удален
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        unit:
+          type: string
+    Dish:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        dish_id:
+          type: integer
+        available:
+          type: boolean
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        dish_id:
+          type: integer
+        quantity:
+          type: integer
+        order_time:
+          type: string
+          format: date-time
