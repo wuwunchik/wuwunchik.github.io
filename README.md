@@ -69,7 +69,7 @@ CREATE TABLE orders (
 );
 ```
 
-🚀 Быстрый старт
+## 🚀 Быстрый старт
 
     Клонируйте репозиторий
     ```bash
@@ -96,11 +96,11 @@ go run main.go
 
 Сервер будет доступен по адресу: http://localhost:8080.
 
-📚 Документация API
+## 📚 Документация API
 
 Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/api/v_0_1/#/)
 
-🔧 Технологии
+## 🔧 Технологии
 
     Язык: Go
 
@@ -110,8 +110,9 @@ go run main.go
 
     Развёртывание: GitHub Pages (для Swagger UI)
 
-📂 Структура проекта
-text
+## 📂 Структура проекта
+
+```text
 
 📦wuwunchik.github.io
 ├── 📂docs
@@ -122,7 +123,5 @@ text
 ├── 📜main.go
 ├── 📜go.mod
 └── 📜README.md
-
-```
 
 ```
