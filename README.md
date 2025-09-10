@@ -73,13 +73,11 @@ CREATE TABLE orders (
 
 Клонируйте репозиторий
 
-    ```bash
+```bash
+clone https://github.com/wuwunchik/wuwunchik.github.io.git
+cd wuwunchik.github.io
 
-      clone https://github.com/wuwunchik/wuwunchik.github.io.git
-
-      cd wuwunchik.github.io
-
-    ```
+```
 
 Установите зависимости
 
