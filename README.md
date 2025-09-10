@@ -68,3 +68,61 @@ CREATE TABLE orders (
     FOREIGN KEY (dish_id) REFERENCES dishes(id)
 );
 ```
+
+🚀 Быстрый старт
+
+    Клонируйте репозиторий
+    ```bash
+
+      clone https://github.com/wuwunchik/wuwunchik.github.io.git
+
+      cd wuwunchik.github.io
+
+    ```
+
+Установите зависимости
+
+```bash
+
+go mod tidy
+```
+
+Запустите сервер
+
+```bash
+
+go run main.go
+```
+
+Сервер будет доступен по адресу: http://localhost:8080.
+
+📚 Документация API
+
+Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/api/v_0_1/#/)
+
+🔧 Технологии
+
+    Язык: Go
+
+    База данных: SQLite
+
+    Документация API: Swagger UI
+
+    Развёртывание: GitHub Pages (для Swagger UI)
+
+📂 Структура проекта
+text
+
+📦wuwunchik.github.io
+├── 📂docs
+│ └── 📂api
+│ └── 📂v_0_1
+│ ├── swagger.yaml
+│ └── index.html
+├── 📜main.go
+├── 📜go.mod
+└── 📜README.md
+
+```
+
+```
