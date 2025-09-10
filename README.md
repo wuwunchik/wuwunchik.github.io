@@ -71,7 +71,8 @@ CREATE TABLE orders (
 
 ## 🚀 Быстрый старт
 
-    Клонируйте репозиторий
+Клонируйте репозиторий
+
     ```bash
 
       clone https://github.com/wuwunchik/wuwunchik.github.io.git
