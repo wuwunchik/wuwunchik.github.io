@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -18,41 +19,60 @@ func GetMenu(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var menu []models.MenuItem
+	var menuItems []models.MenuItem
 	for rows.Next() {
-		var m models.MenuItem
-		err := rows.Scan(&m.ID, &m.DishID, &m.Available)
+		var mi models.MenuItem
+		err := rows.Scan(&mi.ID, &mi.DishID, &mi.Available)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		menu = append(menu, m)
+		menuItems = append(menuItems, mi)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(menu)
+	json.NewEncoder(w).Encode(menuItems)
+}
+
+func GetMenuItem(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid menu item ID", http.StatusBadRequest)
+		return
+	}
+
+	var mi models.MenuItem
+	err = database.DB.QueryRow("SELECT id, dish_id, available FROM menu WHERE id = ?", id).Scan(&mi.ID, &mi.DishID, &mi.Available)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Menu item not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(mi)
 }
 
 func CreateMenuItem(w http.ResponseWriter, r *http.Request) {
-	var m models.MenuItem
-	err := json.NewDecoder(r.Body).Decode(&m)
+	var mi models.MenuItem
+	err := json.NewDecoder(r.Body).Decode(&mi)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	result, err := database.DB.Exec("INSERT INTO menu (dish_id, available) VALUES (?, ?)", m.DishID, m.Available)
+	_, err = database.DB.Exec("INSERT INTO menu (dish_id, available) VALUES (?, ?)", mi.DishID, mi.Available)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	id, _ := result.LastInsertId()
-	m.ID = int(id)
-
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(m)
+	json.NewEncoder(w).Encode(mi)
 }
 
 func UpdateMenuItem(w http.ResponseWriter, r *http.Request) {
@@ -63,23 +83,21 @@ func UpdateMenuItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var m models.MenuItem
-	err = json.NewDecoder(r.Body).Decode(&m)
+	var mi models.MenuItem
+	err = json.NewDecoder(r.Body).Decode(&mi)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	_, err = database.DB.Exec("UPDATE menu SET dish_id = ?, available = ? WHERE id = ?", m.DishID, m.Available, id)
+	_, err = database.DB.Exec("UPDATE menu SET dish_id = ?, available = ? WHERE id = ?", mi.DishID, mi.Available, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	m.ID = id
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(m)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(mi)
 }
 
 func DeleteMenuItem(w http.ResponseWriter, r *http.Request) {
@@ -96,5 +114,6 @@ func DeleteMenuItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Menu item deleted successfully"})
 }
