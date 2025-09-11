@@ -94,13 +94,13 @@ cd wuwunchik.github.io
 
 3. Установите зависимости
 
-```bash
+```go
 go mod tidy
 ```
 
 4. Запустите сервер
 
-```bash
+```go
 go run main.go
 ```
 
