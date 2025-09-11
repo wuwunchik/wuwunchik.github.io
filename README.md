@@ -74,12 +74,17 @@ API поддерживает CRUD-операции для:
 
 ![Схема базы данных `Cafeteria Management System`](./docs/db_scheme/sources/db_schema.drawio.svg)
 
+## Документация API
+
+Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/docs/api/v_0_1/)
+
 ## Запуск программы
 
 1. Клонируйте репозиторий
 
 ```bash
 git clone https://github.com/wuwunchik/wuwunchik.github.io.git
+
 cd wuwunchik.github.io
 
 ```
@@ -99,23 +104,3 @@ go run main.go
 ```
 
 Сервер будет доступен по адресу: http://localhost:8080.
-
-## Документация API
-
-Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/docs/api/v_0_1/)
-
-## Структура проекта
-
-```text
-
-📦wuwunchik.github.io
-├── 📂docs
-│ └── 📂api
-│ └── 📂v_0_1
-│ ├── swagger.yaml
-│ └── index.html
-├── 📜main.go
-├── 📜go.mod
-└── 📜README.md
-
-```
