@@ -72,7 +72,7 @@ API поддерживает CRUD-операции для:
 
 ### Схема базы данных
 
-![Alt text](docs\db_scheme\sources\db_schema.drawio.svg)
+![Схема базы данных `Cafeteria Management System`](./docs/db_scheme/sources/db_schema.drawio.svg)
 
 ## Запуск программы
 
