@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 Описание проекта
+## Описание проекта
 
 API поддерживает CRUD-операции для:
 
@@ -15,7 +15,7 @@ API поддерживает CRUD-операции для:
 
 ---
 
-## 🛠 Структура базы данных
+## Структура базы данных
 
 ### Таблицы
 
@@ -26,44 +26,55 @@ API поддерживает CRUD-операции для:
 | `menu`     | Текущее меню (связь с блюдами) |
 | `orders`   | История заказов                |
 
+### Таблица `products`
+
+| Поле       | Тип данных | Описание               | Ключ |
+| ---------- | ---------- | ---------------------- | ---- |
+| `id`       | `INTEGER`  | Идентификатор продукта | PK   |
+| `name`     | `TEXT`     | Наименование продукта  |      |
+| `quantity` | `INTEGER`  | Количество продукта    |      |
+| `unit`     | `TEXT`     |                        |      |
+
+### Таблица `dishes`
+
+| Поле          | Тип данных | Описание            | Ключ |
+| ------------- | ---------- | ------------------- | ---- |
+| `id`          | `INTEGER`  | Идентификатор блюда | PK   |
+| `name`        | `TEXT`     | Наименование блюда  |      |
+| `description` | `TEXT`     | Описание блюда      |      |
+| `price`       | `REAL`     | Цена блюда          |      |
+
+### Таблица `menu`
+
+| Поле        | Тип данных | Описание                  | Ключ          |
+| ----------- | ---------- | ------------------------- | ------------- |
+| `id`        | `INTEGER`  | Идентификатор пункта меню | PK            |
+| `dish_id`   | `INTEGER`  | Идентификатор блюда       | FK - `dishes` |
+| `available` | `BOOLEAN`  | Доступность блюда в меню  |               |
+
+### Таблица `orders`
+
+| Поле         | Тип данных | Описание             | Ключ          |
+| ------------ | ---------- | -------------------- | ------------- |
+| `id`         | `INTEGER`  | Идентификатор заказа | PK            |
+| `dish_id`    | `INTEGER`  | Идентификатор блюда  | FK - `dishes` |
+| `quantity`   | `BOOLEAN`  | Количество           |               |
+| `order_time` | `BOOLEAN`  | Время заказа         |               |
+
+### Таблица пересечений `dish_ingredients`
+
+| Поле         | Тип данных | Описание                        | Ключ            |
+| ------------ | ---------- | ------------------------------- | --------------- |
+| `id`         | `INTEGER`  | Идентификатор ингридиента-блюда | PK              |
+| `dish_id`    | `INTEGER`  | Идентификатор блюда             | FK - `dishes`   |
+| `product_id` | `INTEGER`  | Идентификатор продукта          | FK - `products` |
+| `quantity`   | `REAL`     | Количество ингридиента          |                 |
+
 ### Схема базы данных
 
-```sql
--- Продукты
-CREATE TABLE products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    unit TEXT NOT NULL
-);
+![Схема базы данных `Cafeteria Management System`](docs\db_scheme\sources\db_schema.drawio.svg)
 
--- Блюда
-CREATE TABLE dishes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    price REAL NOT NULL
-);
-
--- Меню (связь блюд и их доступности)
-CREATE TABLE menu (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dish_id INTEGER NOT NULL,
-    available BOOLEAN NOT NULL,
-    FOREIGN KEY (dish_id) REFERENCES dishes(id)
-);
-
--- Журнал заказов
-CREATE TABLE orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dish_id INTEGER NOT NULL,
-    quantity INTEGER NOT NULL,
-    order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (dish_id) REFERENCES dishes(id)
-);
-```
-
-## 🚀 Быстрый старт
+## Запуск программы
 
 1. Клонируйте репозиторий
 
@@ -89,11 +100,11 @@ go run main.go
 
 Сервер будет доступен по адресу: http://localhost:8080.
 
-## 📚 Документация API
+## Документация API
 
-Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/api/v_0_1/#/)
+Документация API доступна через Swagger UI: [Cafeteria Management API](https://wuwunchik.github.io/docs/api/v_0_1/)
 
-## 📂 Структура проекта
+## Структура проекта
 
 ```text
 

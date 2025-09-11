@@ -11,42 +11,42 @@ import (
 	"wuwunchik.github.io/api/models"
 )
 
-func GetProducts(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, name, quantity, unit FROM products")
+func GetDishes(w http.ResponseWriter, r *http.Request) {
+	rows, err := database.DB.Query("SELECT id, name, description, price FROM dishes")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var products []models.Product
+	var dishes []models.Dish
 	for rows.Next() {
-		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Quantity, &p.Unit)
+		var d models.Dish
+		err := rows.Scan(&d.ID, &d.Name, &d.Description, &d.Price)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		products = append(products, p)
+		dishes = append(dishes, d)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	json.NewEncoder(w).Encode(dishes)
 }
 
-func GetProduct(w http.ResponseWriter, r *http.Request) {
+func GetDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
 		return
 	}
 
-	var p models.Product
-	err = database.DB.QueryRow("SELECT id, name, quantity, unit FROM products WHERE id = ?", id).Scan(&p.ID, &p.Name, &p.Quantity, &p.Unit)
+	var d models.Dish
+	err = database.DB.QueryRow("SELECT id, name, description, price FROM dishes WHERE id = ?", id).Scan(&d.ID, &d.Name, &d.Description, &d.Price)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Product not found", http.StatusNotFound)
+			http.Error(w, "Dish not found", http.StatusNotFound)
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -54,67 +54,67 @@ func GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(d)
 }
 
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
-	var p models.Product
-	err := json.NewDecoder(r.Body).Decode(&p)
+func CreateDish(w http.ResponseWriter, r *http.Request) {
+	var d models.Dish
+	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	result, err := database.DB.Exec("INSERT INTO products (name, quantity, unit) VALUES (?, ?, ?)", p.Name, p.Quantity, p.Unit)
+	result, err := database.DB.Exec("INSERT INTO dishes (name, description, price) VALUES (?, ?, ?)", d.Name, d.Description, d.Price)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	id, _ := result.LastInsertId()
-	p.ID = int(id)
+	d.ID = int(id)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(d)
 }
 
-func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func UpdateDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
 		return
 	}
 
-	var p models.Product
-	err = json.NewDecoder(r.Body).Decode(&p)
+	var d models.Dish
+	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	_, err = database.DB.Exec("UPDATE products SET name = ?, quantity = ?, unit = ? WHERE id = ?", p.Name, p.Quantity, p.Unit, id)
+	_, err = database.DB.Exec("UPDATE dishes SET name = ?, description = ?, price = ? WHERE id = ?", d.Name, d.Description, d.Price, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	p.ID = id
+	d.ID = id
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(d)
 }
 
-func DeleteProduct(w http.ResponseWriter, r *http.Request) {
+func DeleteDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
 		return
 	}
 
-	_, err = database.DB.Exec("DELETE FROM products WHERE id = ?", id)
+	_, err = database.DB.Exec("DELETE FROM dishes WHERE id = ?", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
