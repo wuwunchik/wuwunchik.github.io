@@ -72,7 +72,7 @@ API поддерживает CRUD-операции для:
 
 ### Схема базы данных
 
-![Схема базы данных `Cafeteria Management System`](./docs/db_scheme/sources/db_schema.drawio.svg)
+![Схема базы данных `Cafeteria Management System`](./docs/db_scheme/sources/db_schema_transparent.drawio.svg)
 
 ## Документация API
 
@@ -84,22 +84,23 @@ API поддерживает CRUD-операции для:
 
 ```bash
 git clone https://github.com/wuwunchik/wuwunchik.github.io.git
-
-cd wuwunchik.github.io
-
 ```
 
-2. Установите зависимости
+2. Перейти в папку репозитория
 
 ```bash
+cd wuwunchik.github.io
+```
 
+3. Установите зависимости
+
+```bash
 go mod tidy
 ```
 
-3. Запустите сервер
+4. Запустите сервер
 
 ```bash
-
 go run main.go
 ```
 
