@@ -12,7 +12,11 @@ import (
 )
 
 func GetProducts(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, name, quantity, unit FROM products")
+	rows, err := database.DB.Query(`
+			SELECT p.id, p.name, p.quantity, p.unit_id, u.name, u.abbreviation
+			FROM products p
+			JOIN units u ON p.unit_id = u.id
+	`)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -22,11 +26,13 @@ func GetProducts(w http.ResponseWriter, r *http.Request) {
 	var products []models.Product
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Quantity, &p.Unit)
+		var unit models.Unit
+		err := rows.Scan(&p.ID, &p.Name, &p.Quantity, &p.UnitID, &unit.Name, &unit.Abbreviation)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		p.Unit = unit
 		products = append(products, p)
 	}
 
