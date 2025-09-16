@@ -1,10 +1,12 @@
 -- Удаление таблиц, если они существуют
+DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS menu;
 DROP TABLE IF EXISTS dish_ingredients;
 DROP TABLE IF EXISTS dishes;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS units;
+DROP TABLE IF EXISTS tables;
 
 -- Создание таблицы единиц измерения
 CREATE TABLE IF NOT EXISTS units (
@@ -20,6 +22,13 @@ CREATE TABLE IF NOT EXISTS products (
     quantity INTEGER NOT NULL,
     unit_id INTEGER NOT NULL,
     FOREIGN KEY (unit_id) REFERENCES units(id)
+);
+
+-- Создание таблицы столиков
+CREATE TABLE IF NOT EXISTS tables (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    number INTEGER NOT NULL UNIQUE,
+    capacity INTEGER NOT NULL
 );
 
 -- Создание таблицы блюд
@@ -52,9 +61,20 @@ CREATE TABLE IF NOT EXISTS menu (
 -- Создание таблицы заказов
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_id INTEGER NOT NULL,
+    order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL DEFAULT 'created',
+    FOREIGN KEY (table_id) REFERENCES tables(id)
+);
+
+-- Создание таблицы пунктов заказа
+CREATE TABLE IF NOT EXISTS order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
     dish_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
-    order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (order_id, dish_id),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (dish_id) REFERENCES dishes(id)
 );
 
@@ -73,6 +93,14 @@ INSERT INTO products (name, quantity, unit_id) VALUES
 ('Яйца', 200, 5),      -- 200 штук
 ('Молоко', 30000, 3),  -- 30 литров
 ('Масло', 20000, 2);   -- 20 кг
+
+-- Заполнение таблицы tables начальными данными
+INSERT INTO tables (number, capacity) VALUES
+(1, 4),
+(2, 4),
+(3, 6),
+(4, 2),
+(5, 8);
 
 -- Заполнение таблицы dishes начальными данными
 INSERT INTO dishes (name, description, price) VALUES
