@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Cafeteria Management API
   version: 0.1.0
-  description: API для управления столовой (продукты, блюда, меню, заказы)
+  description: API для управления кафе (продукты, блюда, меню, заказы)
 servers:
   - url: http://localhost:8080
     description: Локальный сервер
@@ -11,15 +11,13 @@ tags:
     description: Операции с продуктами
   - name: Dishes
     description: Операции с блюдами
-  - name: DishIngredients
-    description: Операции с ингредиентами блюд
   - name: Menu
     description: Операции с меню
   - name: Orders
     description: Операции с заказами
 paths:
   # Продукты
-  /api/products:
+  /api/products/all:
     get:
       tags: [Products]
       summary: Получение списка всех продуктов
@@ -32,6 +30,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Product"
+        500:
+          description: Внутренняя ошибка сервера
+  /api/products/add:
     post:
       tags: [Products]
       summary: Добавление нового продукта
@@ -48,7 +49,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Product"
-  /api/products/{id}:
+        400:
+          description: Некорректные данные
+        500:
+          description: Внутренняя ошибка сервера
+  /api/products/get/{id}:
     get:
       tags: [Products]
       summary: Получение информации о продукте
@@ -65,6 +70,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Product"
+        400:
+          description: Некорректный ID продукта
+        404:
+          description: Продукт не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/products/edit/{id}:
     put:
       tags: [Products]
       summary: Обновление информации о продукте
@@ -87,6 +99,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Product"
+        400:
+          description: Некорректные данные
+        404:
+          description: Продукт не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/products/delete/{id}:
     delete:
       tags: [Products]
       summary: Удаление продукта
@@ -99,9 +118,14 @@ paths:
       responses:
         200:
           description: Продукт успешно удален
-
+        400:
+          description: Некорректный ID продукта
+        404:
+          description: Продукт не найден
+        500:
+          description: Внутренняя ошибка сервера
   # Блюда
-  /api/dishes:
+  /api/dishes/all:
     get:
       tags: [Dishes]
       summary: Получение списка всех блюд
@@ -114,6 +138,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Dish"
+        500:
+          description: Внутренняя ошибка сервера
+  /api/dishes/add:
     post:
       tags: [Dishes]
       summary: Добавление нового блюда
@@ -130,7 +157,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dish"
-  /api/dishes/{id}:
+        400:
+          description: Некорректные данные
+        500:
+          description: Внутренняя ошибка сервера
+  /api/dishes/get/{id}:
     get:
       tags: [Dishes]
       summary: Получение информации о блюде
@@ -147,6 +178,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dish"
+        400:
+          description: Некорректный ID блюда
+        404:
+          description: Блюдо не найдено
+        500:
+          description: Внутренняя ошибка сервера
+  /api/dishes/update/{id}:
     put:
       tags: [Dishes]
       summary: Обновление информации о блюде
@@ -169,6 +207,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dish"
+        400:
+          description: Некорректные данные
+        404:
+          description: Блюдо не найдено
+        500:
+          description: Внутренняя ошибка сервера
+  /api/dishes/delete/{id}:
     delete:
       tags: [Dishes]
       summary: Удаление блюда
@@ -181,91 +226,14 @@ paths:
       responses:
         200:
           description: Блюдо успешно удалено
-
-  # Ингредиенты блюд
-  /api/dish_ingredients:
-    get:
-      tags: [DishIngredients]
-      summary: Получение списка всех ингредиентов блюд
-      responses:
-        200:
-          description: Список ингредиентов блюд
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DishIngredient"
-    post:
-      tags: [DishIngredients]
-      summary: Добавление нового ингредиента блюда
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DishIngredient"
-      responses:
-        201:
-          description: Ингредиент блюда успешно добавлен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DishIngredient"
-  /api/dish_ingredients/{id}:
-    get:
-      tags: [DishIngredients]
-      summary: Получение информации об ингредиенте блюда
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Информация об ингредиенте блюда
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DishIngredient"
-    put:
-      tags: [DishIngredients]
-      summary: Обновление информации об ингредиенте блюда
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DishIngredient"
-      responses:
-        200:
-          description: Ингредиент блюда успешно обновлен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DishIngredient"
-    delete:
-      tags: [DishIngredients]
-      summary: Удаление ингредиента блюда
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Ингредиент блюда успешно удален
-
+        400:
+          description: Некорректный ID блюда
+        404:
+          description: Блюдо не найдено
+        500:
+          description: Внутренняя ошибка сервера
   # Меню
-  /api/menu:
+  /api/menu/all:
     get:
       tags: [Menu]
       summary: Получение текущего меню
@@ -278,6 +246,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MenuItem"
+        500:
+          description: Внутренняя ошибка сервера
+  /api/menu/add:
     post:
       tags: [Menu]
       summary: Добавление блюда в меню
@@ -294,7 +265,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MenuItem"
-  /api/menu/{id}:
+        400:
+          description: Некорректные данные
+        500:
+          description: Внутренняя ошибка сервера
+  /api/menu/get/{id}:
     get:
       tags: [Menu]
       summary: Получение информации о пункте меню
@@ -311,6 +286,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MenuItem"
+        400:
+          description: Некорректный ID пункта меню
+        404:
+          description: Пункт меню не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/menu/update/{id}:
     put:
       tags: [Menu]
       summary: Обновление пункта меню
@@ -333,6 +315,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MenuItem"
+        400:
+          description: Некорректные данные
+        404:
+          description: Пункт меню не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/menu/delete/{id}:
     delete:
       tags: [Menu]
       summary: Удаление пункта меню
@@ -345,9 +334,14 @@ paths:
       responses:
         200:
           description: Пункт меню успешно удален
-
+        400:
+          description: Некорректный ID пункта меню
+        404:
+          description: Пункт меню не найден
+        500:
+          description: Внутренняя ошибка сервера
   # Заказы
-  /api/orders:
+  /api/orders/all:
     get:
       tags: [Orders]
       summary: Получение списка всех заказов
@@ -360,6 +354,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Order"
+        500:
+          description: Внутренняя ошибка сервера
+  /api/orders/add:
     post:
       tags: [Orders]
       summary: Создание нового заказа
@@ -376,7 +373,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
-  /api/orders/{id}:
+        400:
+          description: Некорректные данные
+        500:
+          description: Внутренняя ошибка сервера
+  /api/orders/get/{id}:
     get:
       tags: [Orders]
       summary: Получение информации о заказе
@@ -393,6 +394,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+        400:
+          description: Некорректный ID заказа
+        404:
+          description: Заказ не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/orders/update/{id}:
     put:
       tags: [Orders]
       summary: Обновление заказа
@@ -415,6 +423,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+        400:
+          description: Некорректные данные
+        404:
+          description: Заказ не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/orders/delete/{id}:
     delete:
       tags: [Orders]
       summary: Удаление заказа
@@ -427,7 +442,41 @@ paths:
       responses:
         200:
           description: Заказ успешно удален
-
+        400:
+          description: Некорректный ID заказа
+        404:
+          description: Заказ не найден
+        500:
+          description: Внутренняя ошибка сервера
+  /api/orders/items/{order_id}:
+    post:
+      tags: [Orders]
+      summary: Добавление блюда в заказ
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderItem"
+      responses:
+        201:
+          description: Блюдо успешно добавлено в заказ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderItem"
+        400:
+          description: Некорректные данные
+        404:
+          description: Заказ не найден
+        500:
+          description: Внутренняя ошибка сервера
 components:
   schemas:
     Product:
@@ -439,8 +488,17 @@ components:
           type: string
         quantity:
           type: integer
+        unit_id:
+          type: integer
         unit:
-          type: string
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            abbreviation:
+              type: string
     Dish:
       type: object
       properties:
@@ -453,17 +511,6 @@ components:
         price:
           type: number
           format: float
-    DishIngredient:
-      type: object
-      properties:
-        id:
-          type: integer
-        dish_id:
-          type: integer
-        product_id:
-          type: integer
-        quantity:
-          type: integer
     MenuItem:
       type: object
       properties:
@@ -478,10 +525,21 @@ components:
       properties:
         id:
           type: integer
-        dish_id:
-          type: integer
-        quantity:
+        table_id:
           type: integer
         order_time:
           type: string
           format: date-time
+        status:
+          type: string
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: integer
+        dish_id:
+          type: integer
+        quantity:
+          type: integer
