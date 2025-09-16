@@ -1,3 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Cafeteria Management API
+  version: 0.1.0
+  description: API для управления столовой (продукты, блюда, меню, заказы)
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+tags:
+  - name: Products
+    description: Операции с продуктами
+  - name: Dishes
+    description: Операции с блюдами
+  - name: DishIngredients
+    description: Операции с ингредиентами блюд
+  - name: Menu
+    description: Операции с меню
+  - name: Orders
+    description: Операции с заказами
 paths:
   /api/dish_ingredients:
     get:
@@ -162,3 +181,72 @@ paths:
       responses:
         200:
           description: Пункт заказа успешно удален
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        unit:
+          type: string
+    Dish:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+    DishIngredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        dish_id:
+          type: integer
+        product_id:
+          type: integer
+        quantity:
+          type: integer
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        dish_id:
+          type: integer
+        available:
+          type: boolean
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        dish_id:
+          type: integer
+        quantity:
+          type: integer
+        order_time:
+          type: string
+          format: date-time
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: integer
+        dish_id:
+          type: integer
+        quantity:
+          type: integer
