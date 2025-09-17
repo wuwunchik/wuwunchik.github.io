@@ -11,8 +11,8 @@ tags:
     description: Операции с продуктами
   - name: Dishes
     description: Операции с блюдами
-  - name: DishIngredients
-    description: Операции с ингредиентами блюд
+  # - name: DishIngredients
+  #   description: Операции с ингредиентами блюд
   - name: Menu
     description: Операции с меню
   - name: Orders
