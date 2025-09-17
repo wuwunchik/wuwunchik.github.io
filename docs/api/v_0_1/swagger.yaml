@@ -11,8 +11,6 @@ tags:
     description: Операции с продуктами
   - name: Dishes
     description: Операции с блюдами
-  # - name: DishIngredients
-  #   description: Операции с ингредиентами блюд
   - name: Menu
     description: Операции с меню
   - name: Orders
@@ -187,89 +185,6 @@ paths:
       responses:
         200:
           description: Блюдо успешно удалено
-
-  # Ингредиенты блюд
-  # /api/dish_ingredients:
-  #   get:
-  #     tags: [DishIngredients]
-  #     summary: Получение списка всех ингредиентов блюд
-  #     responses:
-  #       200:
-  #         description: Список ингредиентов блюд
-  #         content:
-  #           application/json:
-  #             schema:
-  #               type: array
-  #               items:
-  #                 $ref: "#/components/schemas/DishIngredient"
-  #   post:
-  #     tags: [DishIngredients]
-  #     summary: Добавление нового ингредиента блюда
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/DishIngredient"
-  #     responses:
-  #       201:
-  #         description: Ингредиент блюда успешно добавлен
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/DishIngredient"
-  # /api/dish_ingredients/{id}:
-  #   get:
-  #     tags: [DishIngredients]
-  #     summary: Получение информации об ингредиенте блюда
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         required: true
-  #         schema:
-  #           type: integer
-  #     responses:
-  #       200:
-  #         description: Информация об ингредиенте блюда
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/DishIngredient"
-  #   put:
-  #     tags: [DishIngredients]
-  #     summary: Обновление информации об ингредиенте блюда
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         required: true
-  #         schema:
-  #           type: integer
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/DishIngredient"
-  #     responses:
-  #       200:
-  #         description: Ингредиент блюда успешно обновлен
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/DishIngredient"
-  #   delete:
-  #     tags: [DishIngredients]
-  #     summary: Удаление ингредиента блюда
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         required: true
-  #         schema:
-  #           type: integer
-  #     responses:
-  #       200:
-  #         description: Ингредиент блюда успешно удален
-
   # Меню
   /api/menu:
     get:
