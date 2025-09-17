@@ -14,7 +14,7 @@ func RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/products/delete/{id}", controllers.DeleteProduct).Methods("DELETE")
 
 	// Маршруты для блюд
-	router.HandleFunc("/api/dishes/all", controllers.GetAllDishes).Methods("GET")
+	router.HandleFunc("/api/dishes/all", controllers.GetDishes).Methods("GET")
 	router.HandleFunc("/api/dishes/get/{id}", controllers.GetDish).Methods("GET")
 	router.HandleFunc("/api/dishes/add", controllers.CreateDish).Methods("POST")
 	router.HandleFunc("/api/dishes/update/{id}", controllers.UpdateDish).Methods("PUT")
