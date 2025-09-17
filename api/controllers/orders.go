@@ -110,8 +110,16 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Начинаем транзакцию
+	tx, err := database.DB.Begin()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer tx.Rollback()
+
 	// Получаем все пункты заказа перед удалением заказа
-	rows, err := database.DB.Query("SELECT id, dish_id, quantity FROM order_items WHERE order_id = ?", id)
+	rows, err := tx.Query("SELECT id, dish_id, quantity FROM order_items WHERE order_id = ?", id)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -127,7 +135,7 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		oi.OrderID = id
-		err = ReturnProductsForOrder(database.DB, oi)
+		err = ReturnProductsForOrder(tx, oi)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -135,7 +143,14 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Удаляем заказ
-	_, err = database.DB.Exec("DELETE FROM orders WHERE id = ?", id)
+	_, err = tx.Exec("DELETE FROM orders WHERE id = ?", id)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Коммитим транзакцию
+	err = tx.Commit()
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
