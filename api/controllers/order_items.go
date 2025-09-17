@@ -14,8 +14,8 @@ import (
 )
 
 // Функция для проверки доступности продуктов
-func CheckProductAvailability(db *sql.DB, orderItem models.OrderItem) error {
-	rows, err := db.Query(`
+func CheckProductAvailability(tx *sql.Tx, orderItem models.OrderItem) error {
+	rows, err := tx.Query(`
 		SELECT p.id, p.quantity, di.quantity
 		FROM products p
 		JOIN dish_ingredients di ON p.id = di.product_id
@@ -42,8 +42,8 @@ func CheckProductAvailability(db *sql.DB, orderItem models.OrderItem) error {
 }
 
 // Функция для списания продуктов при заказе
-func DeductProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
-	rows, err := db.Query(`
+func DeductProductsForOrder(tx *sql.Tx, orderItem models.OrderItem) error {
+	rows, err := tx.Query(`
 		SELECT product_id, quantity
 		FROM dish_ingredients
 		WHERE dish_id = ?
@@ -60,7 +60,7 @@ func DeductProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
 		}
 
 		totalRequired := requiredQuantity * orderItem.Quantity
-		_, err = db.Exec(`
+		_, err = tx.Exec(`
 			UPDATE products
 			SET quantity = quantity - ?
 			WHERE id = ? AND quantity >= ?
@@ -74,8 +74,8 @@ func DeductProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
 }
 
 // Функция для возврата продуктов при уменьшении количества в заказе
-func ReturnProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
-	rows, err := db.Query(`
+func ReturnProductsForOrder(tx *sql.Tx, orderItem models.OrderItem) error {
+	rows, err := tx.Query(`
 		SELECT product_id, quantity
 		FROM dish_ingredients
 		WHERE dish_id = ?
@@ -91,8 +91,8 @@ func ReturnProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
 			return err
 		}
 
-		totalReturned := requiredQuantity * (-orderItem.Quantity) // Отрицательное значение для возврата
-		_, err = db.Exec(`
+		totalReturned := requiredQuantity * (-orderItem.Quantity)
+		_, err = tx.Exec(`
 			UPDATE products
 			SET quantity = quantity + ?
 			WHERE id = ?
@@ -166,8 +166,16 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	orderItem.OrderID = orderID
 
+	// Начинаем транзакцию
+	tx, err := database.DB.Begin()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer tx.Rollback()
+
 	// Проверяем доступность продуктов
-	err = CheckProductAvailability(database.DB, orderItem)
+	err = CheckProductAvailability(tx, orderItem)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -175,7 +183,7 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	// Проверяем, существует ли уже такой пункт заказа
 	var existingQuantity int
-	err = database.DB.QueryRow("SELECT quantity FROM order_items WHERE order_id = ? AND dish_id = ?", orderItem.OrderID, orderItem.DishID).Scan(&existingQuantity)
+	err = tx.QueryRow("SELECT quantity FROM order_items WHERE order_id = ? AND dish_id = ?", orderItem.OrderID, orderItem.DishID).Scan(&existingQuantity)
 	if err != nil && err != sql.ErrNoRows {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -183,11 +191,11 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// Если пункт заказа уже существует, увеличиваем количество
-		_, err = database.DB.Exec("UPDATE order_items SET quantity = quantity + ? WHERE order_id = ? AND dish_id = ?",
+		_, err = tx.Exec("UPDATE order_items SET quantity = quantity + ? WHERE order_id = ? AND dish_id = ?",
 			orderItem.Quantity, orderItem.OrderID, orderItem.DishID)
 	} else {
 		// Если пункта заказа нет, создаем новый
-		_, err = database.DB.Exec("INSERT INTO order_items (order_id, dish_id, quantity) VALUES (?, ?, ?)",
+		_, err = tx.Exec("INSERT INTO order_items (order_id, dish_id, quantity) VALUES (?, ?, ?)",
 			orderItem.OrderID, orderItem.DishID, orderItem.Quantity)
 	}
 
@@ -197,7 +205,14 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Списание продуктов
-	err = DeductProductsForOrder(database.DB, orderItem)
+	err = DeductProductsForOrder(tx, orderItem)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Коммитим транзакцию
+	err = tx.Commit()
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -221,16 +236,24 @@ func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Начинаем транзакцию
+	tx, err := database.DB.Begin()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer tx.Rollback()
+
 	// Получаем текущее количество для расчета разницы
 	var currentQuantity int
-	err = database.DB.QueryRow("SELECT quantity FROM order_items WHERE id = ?", id).Scan(&currentQuantity)
+	err = tx.QueryRow("SELECT quantity FROM order_items WHERE id = ?", id).Scan(&currentQuantity)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Обновляем количество в пункте заказа
-	_, err = database.DB.Exec("UPDATE order_items SET quantity = ? WHERE id = ?", oi.Quantity, id)
+	_, err = tx.Exec("UPDATE order_items SET quantity = ? WHERE id = ?", oi.Quantity, id)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -245,22 +268,29 @@ func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 
 		if diff > 0 {
 			// Проверяем доступность продуктов
-			err = CheckProductAvailability(database.DB, orderItem)
+			err = CheckProductAvailability(tx, orderItem)
 			if err != nil {
 				utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 				return
 			}
 			// Списание продуктов
-			err = DeductProductsForOrder(database.DB, orderItem)
+			err = DeductProductsForOrder(tx, orderItem)
 		} else {
 			// Возврат продуктов
-			err = ReturnProductsForOrder(database.DB, orderItem)
+			err = ReturnProductsForOrder(tx, orderItem)
 		}
 
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+	}
+
+	// Коммитим транзакцию
+	err = tx.Commit()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, oi)
@@ -274,9 +304,17 @@ func DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Начинаем транзакцию
+	tx, err := database.DB.Begin()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer tx.Rollback()
+
 	// Получаем информацию о пункте заказа перед удалением
 	var oi models.OrderItem
-	err = database.DB.QueryRow("SELECT id, order_id, dish_id, quantity FROM order_items WHERE id = ?", id).Scan(&oi.ID, &oi.OrderID, &oi.DishID, &oi.Quantity)
+	err = tx.QueryRow("SELECT id, order_id, dish_id, quantity FROM order_items WHERE id = ?", id).Scan(&oi.ID, &oi.OrderID, &oi.DishID, &oi.Quantity)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			utils.RespondWithError(w, http.StatusNotFound, "Order item not found")
@@ -287,14 +325,21 @@ func DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Удаляем пункт заказа
-	_, err = database.DB.Exec("DELETE FROM order_items WHERE id = ?", id)
+	_, err = tx.Exec("DELETE FROM order_items WHERE id = ?", id)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Возвращаем продукты на склад
-	err = ReturnProductsForOrder(database.DB, oi)
+	err = ReturnProductsForOrder(tx, oi)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Коммитим транзакцию
+	err = tx.Commit()
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
