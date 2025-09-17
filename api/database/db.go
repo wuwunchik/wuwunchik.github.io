@@ -33,20 +33,45 @@ func InitDB() {
 }
 
 func createTables() error {
-	// Создаём таблицу продуктов
+	// Создание таблицы единиц измерения
 	_, err := DB.Exec(`
-		CREATE TABLE IF NOT EXISTS products (
+		CREATE TABLE IF NOT EXISTS units (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			quantity INTEGER NOT NULL,
-			unit TEXT NOT NULL
+			name TEXT NOT NULL UNIQUE,
+			abbreviation TEXT NOT NULL UNIQUE
 		);
 	`)
 	if err != nil {
 		return err
 	}
 
-	// Создаём таблицу блюд
+	// Создание таблицы продуктов
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS products (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			quantity INTEGER NOT NULL,
+			unit_id INTEGER NOT NULL,
+			FOREIGN KEY (unit_id) REFERENCES units(id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Создание таблицы столиков
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS tables (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			number INTEGER NOT NULL UNIQUE,
+			capacity INTEGER NOT NULL
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Создание таблицы блюд
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS dishes (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +84,7 @@ func createTables() error {
 		return err
 	}
 
-	// Создаём таблицу ингредиентов блюд
+	// Создание таблицы ингредиентов блюд
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS dish_ingredients (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,34 +92,50 @@ func createTables() error {
 			product_id INTEGER NOT NULL,
 			quantity INTEGER NOT NULL,
 			UNIQUE (dish_id, product_id),
-			FOREIGN KEY (dish_id) REFERENCES dishes(id),
-			FOREIGN KEY (product_id) REFERENCES products(id)
+			FOREIGN KEY (dish_id) REFERENCES dishes(id) ON DELETE CASCADE,
+			FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 		);
 	`)
 	if err != nil {
 		return err
 	}
 
-	// Создаём таблицу меню
+	// Создание таблицы меню
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS menu (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			dish_id INTEGER NOT NULL,
 			available BOOLEAN NOT NULL,
-			FOREIGN KEY (dish_id) REFERENCES dishes(id)
+			FOREIGN KEY (dish_id) REFERENCES dishes(id) ON DELETE CASCADE
 		);
 	`)
 	if err != nil {
 		return err
 	}
 
-	// Создаём таблицу заказов
+	// Создание таблицы заказов
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS orders (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			table_id INTEGER NOT NULL,
+			order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+			status TEXT NOT NULL DEFAULT 'created',
+			FOREIGN KEY (table_id) REFERENCES tables(id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Создание таблицы пунктов заказа
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS order_items (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			order_id INTEGER NOT NULL,
 			dish_id INTEGER NOT NULL,
 			quantity INTEGER NOT NULL,
-			order_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE (order_id, dish_id),
+			FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
 			FOREIGN KEY (dish_id) REFERENCES dishes(id)
 		);
 	`)
@@ -106,20 +147,46 @@ func createTables() error {
 }
 
 func seedTables() error {
-	// Заполняем таблицу продуктов начальными данными
+	// Заполнение таблицы units начальными данными
 	_, err := DB.Exec(`
-		INSERT OR IGNORE INTO products (name, quantity, unit) VALUES
-		('Мука', 100, 'кг'),
-		('Сахар', 50, 'кг'),
-		('Яйца', 200, 'шт'),
-		('Молоко', 30, 'л'),
-		('Масло', 20, 'кг');
+		INSERT OR IGNORE INTO units (name, abbreviation) VALUES
+		('граммы', 'г'),
+		('килограммы', 'кг'),
+		('литры', 'л'),
+		('миллилитры', 'мл'),
+		('штуки', 'шт');
 	`)
 	if err != nil {
 		return err
 	}
 
-	// Заполняем таблицу блюд начальными данными
+	// Заполнение таблицы products начальными данными
+	_, err = DB.Exec(`
+		INSERT OR IGNORE INTO products (name, quantity, unit_id) VALUES
+		('Мука', 100000, 2),   -- 100 кг
+		('Сахар', 50000, 2),   -- 50 кг
+		('Яйца', 200, 5),      -- 200 штук
+		('Молоко', 30000, 3),  -- 30 литров
+		('Масло', 20000, 2);   -- 20 кг
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Заполнение таблицы tables начальными данными
+	_, err = DB.Exec(`
+		INSERT OR IGNORE INTO tables (number, capacity) VALUES
+		(1, 4),
+		(2, 4),
+		(3, 6),
+		(4, 2),
+		(5, 8);
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Заполнение таблицы dishes начальными данными
 	_, err = DB.Exec(`
 		INSERT OR IGNORE INTO dishes (name, description, price) VALUES
 		('Блинчики', 'С мукой и яйцами', 150.50),
@@ -132,14 +199,14 @@ func seedTables() error {
 		return err
 	}
 
-	// Заполняем таблицу ингредиентов блюд начальными данными
+	// Заполнение таблицы dish_ingredients начальными данными
 	_, err = DB.Exec(`
 		INSERT OR IGNORE INTO dish_ingredients (dish_id, product_id, quantity) VALUES
 		(1, 1, 500),   -- Блинчики: 500 грамм муки
 		(1, 3, 10),    -- Блинчики: 10 яиц
-		(1, 4, 1),     -- Блинчики: 1 литр молока
+		(1, 4, 1000),  -- Блинчики: 1 литр молока (в миллилитрах)
 		(2, 2, 100),   -- Суп: 100 грамм сахара
-		(2, 4, 1),     -- Суп: 1 литр молока
+		(2, 4, 1000),  -- Суп: 1 литр молока (в миллилитрах)
 		(3, 1, 100),   -- Котлета: 100 грамм муки
 		(3, 5, 500);   -- Котлета: 500 грамм масла
 	`)
@@ -147,7 +214,7 @@ func seedTables() error {
 		return err
 	}
 
-	// Заполняем таблицу меню начальными данными
+	// Заполнение таблицы menu начальными данными
 	_, err = DB.Exec(`
 		INSERT OR IGNORE INTO menu (dish_id, available) VALUES
 		(1, 1),
