@@ -147,8 +147,13 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = database.DB.Exec("DELETE FROM products WHERE id = ?", id)
+
 	if err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		if err == sql.ErrNoRows {
+			utils.RespondWithError(w, http.StatusNotFound, "Product not found")
+		} else {
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
