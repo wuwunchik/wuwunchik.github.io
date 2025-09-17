@@ -11,31 +11,8 @@ import (
 	"wuwunchik.github.io/api/models"
 )
 
+// GetDishes возвращает список всех блюд
 func GetDishes(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, name, description, price FROM dishes")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var dishes []models.Dish
-	for rows.Next() {
-		var d models.Dish
-		err := rows.Scan(&d.ID, &d.Name, &d.Description, &d.Price)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		dishes = append(dishes, d)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dishes)
-}
-
-// GetAllDishes возвращает список всех блюд
-func GetAllDishes(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, name, description, price FROM dishes")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -125,7 +102,6 @@ func UpdateDish(w http.ResponseWriter, r *http.Request) {
 	}
 
 	d.ID = id
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(d)
 }
