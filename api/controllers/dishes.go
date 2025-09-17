@@ -11,6 +11,7 @@ import (
 	"wuwunchik.github.io/api/models"
 )
 
+// GetDishes возвращает список всех блюд
 func GetDishes(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, name, description, price FROM dishes")
 	if err != nil {
@@ -101,7 +102,6 @@ func UpdateDish(w http.ResponseWriter, r *http.Request) {
 	}
 
 	d.ID = id
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(d)
 }
