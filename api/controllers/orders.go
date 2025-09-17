@@ -10,12 +10,13 @@ import (
 	"github.com/gorilla/mux"
 	"wuwunchik.github.io/api/database"
 	"wuwunchik.github.io/api/models"
+	"wuwunchik.github.io/api/utils"
 )
 
 func GetOrders(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, table_id, order_time, status FROM orders")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -25,21 +26,20 @@ func GetOrders(w http.ResponseWriter, r *http.Request) {
 		var o models.Order
 		err := rows.Scan(&o.ID, &o.TableID, &o.OrderTime, &o.Status)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		orders = append(orders, o)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(orders)
+	utils.RespondWithJSON(w, http.StatusOK, orders)
 }
 
 func GetOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order ID")
 		return
 	}
 
@@ -47,22 +47,21 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow("SELECT id, table_id, order_time, status FROM orders WHERE id = ?", id).Scan(&o.ID, &o.TableID, &o.OrderTime, &o.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Order not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Order not found")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(o)
+	utils.RespondWithJSON(w, http.StatusOK, o)
 }
 
 func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var o models.Order
 	err := json.NewDecoder(r.Body).Decode(&o)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -72,51 +71,49 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	_, err = database.DB.Exec("INSERT INTO orders (table_id, order_time, status) VALUES (?, ?, ?)",
 		o.TableID, o.OrderTime, o.Status)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(o)
+	utils.RespondWithJSON(w, http.StatusCreated, o)
 }
 
 func UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order ID")
 		return
 	}
 
 	var o models.Order
 	err = json.NewDecoder(r.Body).Decode(&o)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	_, err = database.DB.Exec("UPDATE orders SET table_id = ?, status = ? WHERE id = ?", o.TableID, o.Status, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(o)
+	utils.RespondWithJSON(w, http.StatusOK, o)
 }
 
 func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order ID")
 		return
 	}
 
 	// Получаем все пункты заказа перед удалением заказа
 	rows, err := database.DB.Query("SELECT id, dish_id, quantity FROM order_items WHERE order_id = ?", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -126,13 +123,13 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 		var oi models.OrderItem
 		err := rows.Scan(&oi.ID, &oi.DishID, &oi.Quantity)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		oi.OrderID = id
 		err = ReturnProductsForOrder(database.DB, oi)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	}
@@ -140,10 +137,9 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	// Удаляем заказ
 	_, err = database.DB.Exec("DELETE FROM orders WHERE id = ?", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Order deleted successfully"})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Order deleted successfully"})
 }
