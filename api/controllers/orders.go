@@ -43,8 +43,14 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var o models.Order
-	err = database.DB.QueryRow("SELECT id, table_id, order_time, status FROM orders WHERE id = ?", id).Scan(&o.ID, &o.TableID, &o.OrderTime, &o.Status)
+	var orderResponse models.OrderResponse
+
+	// Получаем информацию о заказе
+	err = database.DB.QueryRow(`
+		SELECT id, table_id, order_time, status
+		FROM orders
+		WHERE id = ?
+	`, id).Scan(&orderResponse.ID, &orderResponse.Table.ID, &orderResponse.OrderTime, &orderResponse.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			utils.RespondWithError(w, http.StatusNotFound, "Order not found")
@@ -54,7 +60,42 @@ func GetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.RespondWithJSON(w, http.StatusOK, o)
+	// Получаем пункты заказа с информацией о блюдах
+	rows, err := database.DB.Query(`
+		SELECT oi.id, oi.order_id, oi.dish_id, oi.quantity, d.id, d.name, d.description, d.price
+		FROM order_items oi
+		JOIN dishes d ON oi.dish_id = d.id
+		WHERE oi.order_id = ?
+	`, id)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var orderItemWithDish models.OrderItemWithDish
+		var dish models.Dish
+
+		err := rows.Scan(
+			&orderItemWithDish.ID,
+			&orderItemWithDish.OrderID,
+			&orderItemWithDish.Dish.ID,
+			&orderItemWithDish.Quantity,
+			&dish.ID,
+			&dish.Name,
+			&dish.Description,
+			&dish.Price)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		orderItemWithDish.Dish = dish
+		orderResponse.Table.Dishes = append(orderResponse.Table.Dishes, orderItemWithDish)
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, map[string]models.OrderResponse{"order": orderResponse})
 }
 
 func CreateOrder(w http.ResponseWriter, r *http.Request) {
