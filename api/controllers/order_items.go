@@ -166,8 +166,16 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	orderItem.OrderID = orderID
 
+	// Начинаем транзакцию
+	tx, err := database.DB.Begin()
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer tx.Rollback() // Откат транзакции в случае ошибки
+
 	// Проверяем доступность продуктов
-	err = CheckProductAvailability(database.DB, orderItem)
+	err = CheckProductAvailability(tx, orderItem)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -175,7 +183,7 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	// Проверяем, существует ли уже такой пункт заказа
 	var existingQuantity int
-	err = database.DB.QueryRow("SELECT quantity FROM order_items WHERE order_id = ? AND dish_id = ?", orderItem.OrderID, orderItem.DishID).Scan(&existingQuantity)
+	err = tx.QueryRow("SELECT quantity FROM order_items WHERE order_id = ? AND dish_id = ?", orderItem.OrderID, orderItem.DishID).Scan(&existingQuantity)
 	if err != nil && err != sql.ErrNoRows {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -183,11 +191,11 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// Если пункт заказа уже существует, увеличиваем количество
-		_, err = database.DB.Exec("UPDATE order_items SET quantity = quantity + ? WHERE order_id = ? AND dish_id = ?",
+		_, err = tx.Exec("UPDATE order_items SET quantity = quantity + ? WHERE order_id = ? AND dish_id = ?",
 			orderItem.Quantity, orderItem.OrderID, orderItem.DishID)
 	} else {
 		// Если пункта заказа нет, создаем новый
-		_, err = database.DB.Exec("INSERT INTO order_items (order_id, dish_id, quantity) VALUES (?, ?, ?)",
+		_, err = tx.Exec("INSERT INTO order_items (order_id, dish_id, quantity) VALUES (?, ?, ?)",
 			orderItem.OrderID, orderItem.DishID, orderItem.Quantity)
 	}
 
@@ -197,7 +205,14 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Списание продуктов
-	err = DeductProductsForOrder(database.DB, orderItem)
+	err = DeductProductsForOrder(tx, orderItem)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Коммитим транзакцию
+	err = tx.Commit()
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
