@@ -9,13 +9,13 @@ import (
 	"github.com/gorilla/mux"
 	"wuwunchik.github.io/api/database"
 	"wuwunchik.github.io/api/models"
+	"wuwunchik.github.io/api/utils"
 )
 
-// GetDishes возвращает список всех блюд
 func GetDishes(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, name, description, price FROM dishes")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -25,21 +25,20 @@ func GetDishes(w http.ResponseWriter, r *http.Request) {
 		var d models.Dish
 		err := rows.Scan(&d.ID, &d.Name, &d.Description, &d.Price)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		dishes = append(dishes, d)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dishes)
+	utils.RespondWithJSON(w, http.StatusOK, dishes)
 }
 
 func GetDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ID")
 		return
 	}
 
@@ -47,78 +46,74 @@ func GetDish(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow("SELECT id, name, description, price FROM dishes WHERE id = ?", id).Scan(&d.ID, &d.Name, &d.Description, &d.Price)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Dish not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Dish not found")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(d)
+	utils.RespondWithJSON(w, http.StatusOK, d)
 }
 
 func CreateDish(w http.ResponseWriter, r *http.Request) {
 	var d models.Dish
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	result, err := database.DB.Exec("INSERT INTO dishes (name, description, price) VALUES (?, ?, ?)", d.Name, d.Description, d.Price)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	id, _ := result.LastInsertId()
 	d.ID = int(id)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(d)
+	utils.RespondWithJSON(w, http.StatusCreated, d)
 }
 
 func UpdateDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ID")
 		return
 	}
 
 	var d models.Dish
 	err = json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	_, err = database.DB.Exec("UPDATE dishes SET name = ?, description = ?, price = ? WHERE id = ?", d.Name, d.Description, d.Price, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	d.ID = id
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(d)
+	utils.RespondWithJSON(w, http.StatusOK, d)
 }
 
 func DeleteDish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ID")
 		return
 	}
 
 	_, err = database.DB.Exec("DELETE FROM dishes WHERE id = ?", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Dish deleted successfully"})
 }

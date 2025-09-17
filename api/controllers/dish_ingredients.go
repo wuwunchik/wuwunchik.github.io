@@ -9,12 +9,13 @@ import (
 	"github.com/gorilla/mux"
 	"wuwunchik.github.io/api/database"
 	"wuwunchik.github.io/api/models"
+	"wuwunchik.github.io/api/utils"
 )
 
 func GetDishIngredients(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, dish_id, product_id, quantity FROM dish_ingredients")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -24,21 +25,20 @@ func GetDishIngredients(w http.ResponseWriter, r *http.Request) {
 		var di models.DishIngredient
 		err := rows.Scan(&di.ID, &di.DishID, &di.ProductID, &di.Quantity)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		dishIngredients = append(dishIngredients, di)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dishIngredients)
+	utils.RespondWithJSON(w, http.StatusOK, dishIngredients)
 }
 
 func GetDishIngredient(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ingredient ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ingredient ID")
 		return
 	}
 
@@ -46,28 +46,27 @@ func GetDishIngredient(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow("SELECT id, dish_id, product_id, quantity FROM dish_ingredients WHERE id = ?", id).Scan(&di.ID, &di.DishID, &di.ProductID, &di.Quantity)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Dish ingredient not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Dish ingredient not found")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(di)
+	utils.RespondWithJSON(w, http.StatusOK, di)
 }
 
 func CreateDishIngredient(w http.ResponseWriter, r *http.Request) {
 	var di models.DishIngredient
 	err := json.NewDecoder(r.Body).Decode(&di)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	_, err = database.DB.Exec("INSERT INTO dish_ingredients (dish_id, product_id, quantity) VALUES (?, ?, ?)", di.DishID, di.ProductID, di.Quantity)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -79,41 +78,39 @@ func UpdateDishIngredient(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ingredient ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ingredient ID")
 		return
 	}
 
 	var di models.DishIngredient
 	err = json.NewDecoder(r.Body).Decode(&di)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	_, err = database.DB.Exec("UPDATE dish_ingredients SET dish_id = ?, product_id = ?, quantity = ? WHERE id = ?", di.DishID, di.ProductID, di.Quantity, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(di)
+	utils.RespondWithJSON(w, http.StatusOK, di)
 }
 
 func DeleteDishIngredient(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid dish ingredient ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid dish ingredient ID")
 		return
 	}
 
 	_, err = database.DB.Exec("DELETE FROM dish_ingredients WHERE id = ?", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Dish ingredient deleted successfully"})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Dish ingredient deleted successfully"})
 }

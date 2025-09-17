@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"wuwunchik.github.io/api/database"
 	"wuwunchik.github.io/api/models"
+	"wuwunchik.github.io/api/utils"
 )
 
 // Функция для проверки доступности продуктов
@@ -107,7 +108,7 @@ func ReturnProductsForOrder(db *sql.DB, orderItem models.OrderItem) error {
 func GetOrderItems(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, order_id, dish_id, quantity FROM order_items")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	defer rows.Close()
@@ -117,21 +118,20 @@ func GetOrderItems(w http.ResponseWriter, r *http.Request) {
 		var oi models.OrderItem
 		err := rows.Scan(&oi.ID, &oi.OrderID, &oi.DishID, &oi.Quantity)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		orderItems = append(orderItems, oi)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(orderItems)
+	utils.RespondWithJSON(w, http.StatusOK, orderItems)
 }
 
 func GetOrderItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order item ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order item ID")
 		return
 	}
 
@@ -139,29 +139,28 @@ func GetOrderItem(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow("SELECT id, order_id, dish_id, quantity FROM order_items WHERE id = ?", id).Scan(&oi.ID, &oi.OrderID, &oi.DishID, &oi.Quantity)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Order item not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Order item not found")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(oi)
+	utils.RespondWithJSON(w, http.StatusOK, oi)
 }
 
 func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	orderID, err := strconv.Atoi(vars["order_id"])
 	if err != nil {
-		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order ID")
 		return
 	}
 
 	var orderItem models.OrderItem
 	err = json.NewDecoder(r.Body).Decode(&orderItem)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -170,7 +169,7 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	// Проверяем доступность продуктов
 	err = CheckProductAvailability(database.DB, orderItem)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -178,7 +177,7 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	var existingQuantity int
 	err = database.DB.QueryRow("SELECT quantity FROM order_items WHERE order_id = ? AND dish_id = ?", orderItem.OrderID, orderItem.DishID).Scan(&existingQuantity)
 	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -193,33 +192,32 @@ func AddDishToOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Списание продуктов
 	err = DeductProductsForOrder(database.DB, orderItem)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(orderItem)
+	utils.RespondWithJSON(w, http.StatusCreated, orderItem)
 }
 
 func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order item ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order item ID")
 		return
 	}
 
 	var oi models.OrderItem
 	err = json.NewDecoder(r.Body).Decode(&oi)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -227,14 +225,14 @@ func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 	var currentQuantity int
 	err = database.DB.QueryRow("SELECT quantity FROM order_items WHERE id = ?", id).Scan(&currentQuantity)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Обновляем количество в пункте заказа
 	_, err = database.DB.Exec("UPDATE order_items SET quantity = ? WHERE id = ?", oi.Quantity, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -249,7 +247,7 @@ func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 			// Проверяем доступность продуктов
 			err = CheckProductAvailability(database.DB, orderItem)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 				return
 			}
 			// Списание продуктов
@@ -260,20 +258,19 @@ func UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(oi)
+	utils.RespondWithJSON(w, http.StatusOK, oi)
 }
 
 func DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid order item ID", http.StatusBadRequest)
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid order item ID")
 		return
 	}
 
@@ -282,9 +279,9 @@ func DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
 	err = database.DB.QueryRow("SELECT id, order_id, dish_id, quantity FROM order_items WHERE id = ?", id).Scan(&oi.ID, &oi.OrderID, &oi.DishID, &oi.Quantity)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Order item not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Order item not found")
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 		return
 	}
@@ -292,17 +289,16 @@ func DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
 	// Удаляем пункт заказа
 	_, err = database.DB.Exec("DELETE FROM order_items WHERE id = ?", id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Возвращаем продукты на склад
 	err = ReturnProductsForOrder(database.DB, oi)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Order item deleted successfully"})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Order item deleted successfully"})
 }
