@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Cafeteria Management API
   version: 0.1.0
-  description: API для управления столовой (продукты, блюда, меню, заказы)
+  description: API для управления кафе (продукты, блюда, меню, заказы)
 servers:
   - url: http://localhost:8080
     description: Локальный сервер
