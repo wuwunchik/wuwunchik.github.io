@@ -1,20 +1,16 @@
 openapi: 3.0.0
 info:
-  title: Cafeteria Management API
+  title: Store Management API
   version: 0.1.0
-  description: API для управления кафе (продукты, блюда, меню, заказы)
+  description: API для управления магазином (продукты)
 servers:
   - url: http://localhost:8080
     description: Локальный сервер
 tags:
   - name: Products
     description: Операции с продуктами
-  - name: Dishes
-    description: Операции с блюдами
-  - name: Menu
-    description: Операции с меню
-  - name: Orders
-    description: Операции с заказами
+  - name: Units
+    description: Операции с единицами измерения продуктов
 paths:
   # Продукты
   /api/products/all:
@@ -41,7 +37,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Product"
+              $ref: "#/components/schemas/ProductWithoutId"
       responses:
         201:
           description: Продукт успешно добавлен
@@ -76,7 +72,7 @@ paths:
           description: Продукт не найден
         500:
           description: Внутренняя ошибка сервера
-  /api/products/edit/{id}:
+  /api/products/update/{id}:
     put:
       tags: [Products]
       summary: Обновление информации о продукте
@@ -91,7 +87,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Product"
+              $ref: "#/components/schemas/ProductWithoutId"
       responses:
         200:
           description: Продукт успешно обновлен
@@ -124,47 +120,47 @@ paths:
           description: Продукт не найден
         500:
           description: Внутренняя ошибка сервера
-  # Блюда
-  /api/dishes/all:
+  /api/units/all:
     get:
-      tags: [Dishes]
-      summary: Получение списка всех блюд
+      tags: [Units]
+      summary: Получение списка всех единиц измерения
       responses:
         200:
-          description: Список блюд
+          description: Список единиц измерения
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Dish"
+                  $ref: "#/components/schemas/Unit"
         500:
           description: Внутренняя ошибка сервера
-  /api/dishes/add:
+  /api/units/add:
     post:
-      tags: [Dishes]
-      summary: Добавление нового блюда
+      tags: [Units]
+      summary: Создание новой единицы измерения
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Dish"
+              $ref: "#/components/schemas/UnitWithoutId"
       responses:
         201:
-          description: Блюдо успешно добавлено
+          description: Единица измерения успешно создана
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dish"
+                $ref: "#/components/schemas/Unit"
         400:
           description: Некорректные данные
         500:
           description: Внутренняя ошибка сервера
-  /api/dishes/get/{id}:
+
+  /api/units/get/{id}:
     get:
-      tags: [Dishes]
-      summary: Получение информации о блюде
+      tags: [Units]
+      summary: Получение информации о единице измерения
       parameters:
         - name: id
           in: path
@@ -173,21 +169,21 @@ paths:
             type: integer
       responses:
         200:
-          description: Информация о блюде
+          description: Информация о единице измерения
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dish"
+                $ref: "#/components/schemas/Unit"
         400:
-          description: Некорректный ID блюда
+          description: Некорректный ID единицы измерения
         404:
-          description: Блюдо не найдено
+          description: Единица измерения не найдена
         500:
           description: Внутренняя ошибка сервера
-  /api/dishes/update/{id}:
+  /api/units/update/{id}:
     put:
-      tags: [Dishes]
-      summary: Обновление информации о блюде
+      tags: [Units]
+      summary: Обновление информации о единице измерения
       parameters:
         - name: id
           in: path
@@ -199,24 +195,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Dish"
+              $ref: "#/components/schemas/UnitWithoutId"
       responses:
         200:
-          description: Блюдо успешно обновлено
+          description: Единица измерения успешно обновлена
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dish"
+                $ref: "#/components/schemas/Unit"
         400:
           description: Некорректные данные
         404:
-          description: Блюдо не найдено
+          description: Единица измерения не найдена
         500:
           description: Внутренняя ошибка сервера
-  /api/dishes/delete/{id}:
+  /api/units/delete/{id}:
     delete:
-      tags: [Dishes]
-      summary: Удаление блюда
+      tags: [Units]
+      summary: Удаление единицы измерения
       parameters:
         - name: id
           in: path
@@ -225,256 +221,11 @@ paths:
             type: integer
       responses:
         200:
-          description: Блюдо успешно удалено
+          description: Единица измерения успешно удалена
         400:
-          description: Некорректный ID блюда
+          description: Некорректный ID единицы измерения
         404:
-          description: Блюдо не найдено
-        500:
-          description: Внутренняя ошибка сервера
-  # Меню
-  /api/menu/all:
-    get:
-      tags: [Menu]
-      summary: Получение текущего меню
-      responses:
-        200:
-          description: Текущее меню
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MenuItem"
-        500:
-          description: Внутренняя ошибка сервера
-  /api/menu/add:
-    post:
-      tags: [Menu]
-      summary: Добавление блюда в меню
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MenuItem"
-      responses:
-        201:
-          description: Блюдо успешно добавлено в меню
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MenuItem"
-        400:
-          description: Некорректные данные
-        500:
-          description: Внутренняя ошибка сервера
-  /api/menu/get/{id}:
-    get:
-      tags: [Menu]
-      summary: Получение информации о пункте меню
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Информация о пункте меню
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MenuItem"
-        400:
-          description: Некорректный ID пункта меню
-        404:
-          description: Пункт меню не найден
-        500:
-          description: Внутренняя ошибка сервера
-  /api/menu/update/{id}:
-    put:
-      tags: [Menu]
-      summary: Обновление пункта меню
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MenuItem"
-      responses:
-        200:
-          description: Пункт меню успешно обновлен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MenuItem"
-        400:
-          description: Некорректные данные
-        404:
-          description: Пункт меню не найден
-        500:
-          description: Внутренняя ошибка сервера
-  /api/menu/delete/{id}:
-    delete:
-      tags: [Menu]
-      summary: Удаление пункта меню
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Пункт меню успешно удален
-        400:
-          description: Некорректный ID пункта меню
-        404:
-          description: Пункт меню не найден
-        500:
-          description: Внутренняя ошибка сервера
-  # Заказы
-  /api/orders/all:
-    get:
-      tags: [Orders]
-      summary: Получение списка всех заказов
-      responses:
-        200:
-          description: Список заказов
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Order"
-        500:
-          description: Внутренняя ошибка сервера
-  /api/orders/add:
-    post:
-      tags: [Orders]
-      summary: Создание нового заказа
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Order"
-      responses:
-        201:
-          description: Заказ успешно создан
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-        400:
-          description: Некорректные данные
-        500:
-          description: Внутренняя ошибка сервера
-  /api/orders/get/{id}:
-    get:
-      tags: [Orders]
-      summary: Получение информации о заказе
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Информация о заказе
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-        400:
-          description: Некорректный ID заказа
-        404:
-          description: Заказ не найден
-        500:
-          description: Внутренняя ошибка сервера
-  /api/orders/update/{id}:
-    put:
-      tags: [Orders]
-      summary: Обновление заказа
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Order"
-      responses:
-        200:
-          description: Заказ успешно обновлен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-        400:
-          description: Некорректные данные
-        404:
-          description: Заказ не найден
-        500:
-          description: Внутренняя ошибка сервера
-  /api/orders/delete/{id}:
-    delete:
-      tags: [Orders]
-      summary: Удаление заказа
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: Заказ успешно удален
-        400:
-          description: Некорректный ID заказа
-        404:
-          description: Заказ не найден
-        500:
-          description: Внутренняя ошибка сервера
-  /api/orders/items/{order_id}:
-    post:
-      tags: [Orders]
-      summary: Добавление блюда в заказ
-      parameters:
-        - name: order_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OrderItem"
-      responses:
-        201:
-          description: Блюдо успешно добавлено в заказ
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrderItem"
-        400:
-          description: Некорректные данные
-        404:
-          description: Заказ не найден
+          description: Единица измерения не найдена
         500:
           description: Внутренняя ошибка сервера
 components:
@@ -488,8 +239,6 @@ components:
           type: string
         quantity:
           type: integer
-        unit_id:
-          type: integer
         unit:
           type: object
           properties:
@@ -499,47 +248,28 @@ components:
               type: string
             abbreviation:
               type: string
-    Dish:
+    ProductWithoutId:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        unit_id:
+          type: integer
+    Unit:
       type: object
       properties:
         id:
           type: integer
         name:
           type: string
-        description:
+        abbreviation:
           type: string
-        price:
-          type: number
-          format: float
-    MenuItem:
+    UnitWithoutId:
       type: object
       properties:
-        id:
-          type: integer
-        dish_id:
-          type: integer
-        available:
-          type: boolean
-    Order:
-      type: object
-      properties:
-        id:
-          type: integer
-        table_id:
-          type: integer
-        order_time:
+        name:
           type: string
-          format: date-time
-        status:
+        abbreviation:
           type: string
-    OrderItem:
-      type: object
-      properties:
-        id:
-          type: integer
-        order_id:
-          type: integer
-        dish_id:
-          type: integer
-        quantity:
-          type: integer
