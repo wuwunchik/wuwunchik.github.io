@@ -4,9 +4,6 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"wuwunchik.github.io/api/controllers"
-	"wuwunchik.github.io/api/middleware"
 	"wuwunchik.github.io/api/utils"
 )
 
@@ -41,37 +38,4 @@ func RoleCheck(requiredRoles ...string) func(http.HandlerFunc) http.HandlerFunc 
 			next.ServeHTTP(w, r)
 		}
 	}
-}
-
-// api/routes/routes.go
-func RegisterRoutes(router *mux.Router) {
-	// Маршруты аутентификации
-	router.HandleFunc("/api/auth/login", controllers.Login).Methods("POST")
-	router.HandleFunc("/api/auth/register", controllers.Register).Methods("POST")
-
-	// Публичные маршруты (без JWT)
-	router.HandleFunc("/api/products/public", controllers.GetPublicProducts).Methods("GET")
-
-	// Маршруты для авторизованных пользователей
-	router.HandleFunc("/api/products/all",
-		middleware.ValidateJWT(controllers.GetProducts)).Methods("GET")
-
-	// Маршруты только для админов
-	// Маршруты только для админов
-	router.HandleFunc(
-		"/api/users/all",
-		middleware.ValidateJWT(
-			middleware.RoleCheck("admin")(controllers.GetAllUsers),
-		),
-	).Methods("GET")
-
-	// Маршруты для админов или менеджеров
-	// Маршруты для админов или менеджеров
-	router.HandleFunc(
-		"/api/products/add",
-		middleware.ValidateJWT(
-			middleware.RoleCheck("admin", "manager")(controllers.CreateProduct),
-		),
-	).Methods("POST")
-
 }

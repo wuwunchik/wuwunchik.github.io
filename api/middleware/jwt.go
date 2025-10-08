@@ -15,6 +15,13 @@ import (
 	"wuwunchik.github.io/api/utils"
 )
 
+type contextKey string
+
+const (
+	claimsKey   contextKey = "claims"
+	usernameKey contextKey = "username"
+)
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file: ", err)
@@ -108,8 +115,8 @@ func ValidateJWT(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-			ctx := context.WithValue(r.Context(), "claims", claims)
-			ctx = context.WithValue(ctx, "username", claims.Username)
+			ctx := context.WithValue(r.Context(), claimsKey, claims)
+			ctx = context.WithValue(ctx, usernameKey, claims.Username)
 			r = r.WithContext(ctx)
 		}
 
