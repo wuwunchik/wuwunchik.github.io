@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин продуктов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Список продуктов</h1>
+
+        <!-- Форма авторизации (скрыта после логина) -->
+        <div id="auth-section" class="card p-4 mb-4">
+            <h3>Вход</h3>
+            <div class="mb-3">
+                <input type="text" id="username" class="form-control" placeholder="Логин (admin)">
+            </div>
+            <div class="mb-3">
+                <input type="password" id="password" class="form-control" placeholder="Пароль (password)">
+            </div>
+            <button id="login-btn" class="btn btn-primary">Войти</button>
+        </div>
+
+        <!-- Таблица продуктов (показывается после логина) -->
+        <div id="products-section" class="d-none">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Количество</th>
+                        <th>Единица</th>
+                    </tr>
+                </thead>
+                <tbody id="products-list"></tbody>
+            </table>
+            <button id="logout-btn" class="btn btn-danger mt-3">Выйти</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
