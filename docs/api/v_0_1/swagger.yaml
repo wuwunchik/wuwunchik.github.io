@@ -2,21 +2,71 @@ openapi: 3.0.0
 info:
   title: Store Management API
   version: 0.1.0
-  description: API для управления магазином (продукты)
+  description: API для управления магазином (продукты) с поддержкой JWT и фильтрации
 servers:
   - url: http://localhost:8080
     description: Локальный сервер
 tags:
+  - name: Auth
+    description: Аутентификация и авторизация
   - name: Products
     description: Операции с продуктами
   - name: Units
     description: Операции с единицами измерения продуктов
 paths:
+  # Авторизация и аутентификация
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Получение JWT-токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        200:
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        401:
+          description: Неверные учетные данные
   # Продукты
   /api/products/all:
     get:
       tags: [Products]
-      summary: Получение списка всех продуктов
+      summary: Получение списка продуктов с фильтрацией и сортировкой
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          description: Фильтр по названию продукта
+          schema:
+            type: string
+        - name: quantity_min
+          in: query
+          description: Минимальное количество
+          schema:
+            type: integer
+        - name: unit_id
+          in: query
+          description: Фильтр по ID единицы измерения
+          schema:
+            type: integer
+        - name: sort_by
+          in: query
+          description: Поле для сортировки (name, quantity)
+          schema:
+            type: string
+        - name: sort_order
+          in: query
+          description: Порядок сортировки (asc/desc)
+          schema:
+            type: string
       responses:
         200:
           description: Список продуктов
@@ -26,6 +76,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Product"
+        401:
+          description: Не авторизован
         500:
           description: Внутренняя ошибка сервера
   /api/products/add:
@@ -229,7 +281,24 @@ paths:
         500:
           description: Внутренняя ошибка сервера
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    AuthRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
     Product:
       type: object
       properties:

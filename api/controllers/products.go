@@ -12,6 +12,40 @@ import (
 	"wuwunchik.github.io/api/utils"
 )
 
+// GetPublicProducts возвращает список продуктов без авторизации
+func GetPublicProducts(w http.ResponseWriter, r *http.Request) {
+	rows, err := database.DB.Query(`
+			SELECT p.id, p.name, p.quantity, u.name as unit_name, u.abbreviation
+			FROM products p
+			JOIN units u ON p.unit_id = u.id
+	`)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	type PublicProduct struct {
+		ID       int    `json:"id"`
+		Name     string `json:"name"`
+		Quantity int    `json:"quantity"`
+		Unit     string `json:"unit_name"`
+		Abbr     string `json:"abbreviation"`
+	}
+
+	var products []PublicProduct
+	for rows.Next() {
+		var p PublicProduct
+		if err := rows.Scan(&p.ID, &p.Name, &p.Quantity, &p.Unit, &p.Abbr); err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		products = append(products, p)
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, products)
+}
+
 // GetProducts возвращает список всех продуктов
 func GetProducts(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(`
